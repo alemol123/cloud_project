@@ -1,0 +1,46 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  background: #f7fafc;
+}
+
+h1 {
+  color: #1a365d;
+}
+
+nav a {
+  margin-right: 1rem;
+}
+
+button {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: none;
+  background: #3182ce;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2b6cb0;
+}
+
+.hidden {
+  display: none;
+}
+
+#meals-container {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.meal-card {
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: white;
+  border: 1px solid #e2e8f0;
+}

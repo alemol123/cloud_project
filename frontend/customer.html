@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Customer – Cloud Food Delivery</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>Customer View</h1>
+  <nav>
+    <a href="index.html">Home</a> |
+    <a href="restaurant.html">Restaurant View</a>
+  </nav>
+
+  <section>
+    <h2>Select delivery area</h2>
+    <select id="area-select">
+      <option value="">-- choose an area --</option>
+      <option value="Central">Central</option>
+      <option value="North">North</option>
+      <option value="South">South</option>
+    </select>
+    <button id="load-meals-btn">Load meals</button>
+  </section>
+
+  <section>
+    <h2>Available meals</h2>
+    <div id="meals-container"></div>
+  </section>
+
+  <section>
+    <h2>Your details</h2>
+    <label>Name: <input id="customer-name" /></label><br />
+    <label>Address: <input id="customer-address" /></label><br />
+    <button id="place-order-btn">Place order</button>
+  </section>
+
+  <section id="order-confirmation" class="hidden"></section>
+
+  <script src="app.js"></script>
+</body>
+</html>
