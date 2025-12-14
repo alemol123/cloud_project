@@ -80,7 +80,7 @@ async function handleLoadMeals() {
   mealsContainer.textContent = "Loading meals…";
 
   try {
-    const res = await fetch(`${API_BASE}/HTTPGetMealsByArea?area=${encodeURIComponent(area)}`);
+    const res = await fetch(`${API_BASE}/meals?area=${encodeURIComponent(area)}`);
     const data = await res.json();
 
     if (!res.ok || data.status !== "ok") {
