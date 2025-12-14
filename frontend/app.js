@@ -28,16 +28,15 @@ async function handleMealSubmit(e) {
     return;
   }
 
-  const payload = {
-    restaurantName,
-    // IMPORTANT: backend expects "name" for the dish (to match Azure column)
-    name: dishName,
-    description,
-    prepTimeMinutes: Number(prepTime),
-    price: Number(price),
-    deliveryArea,
-    imageUrl: imageUrl || undefined
-  };
+ const payload = {
+  restaurantName,
+  dishName,                   
+  description,
+  prepTimeMinutes: Number(prepTime),
+  price: Number(price),
+  deliveryArea,
+  imageUrl: imageUrl || undefined
+};
 
   try {
     const res = await fetch(`${API_BASE}/registerMeal`, {
