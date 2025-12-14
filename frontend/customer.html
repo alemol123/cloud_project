@@ -1,73 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Customer View - Cloud Food Delivery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f4f8; }
+    h1 { margin-bottom: 8px; }
+    nav a { color: #2563eb; text-decoration: none; margin-right: 6px; }
+    nav a:hover { text-decoration: underline; }
+    .card { background: #ffffff; padding: 20px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    h2 { margin-top: 0; margin-bottom: 10px; }
+    input, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.95rem; }
+    button { background: #2563eb; color: #ffffff; border: none; padding: 8px 18px; border-radius: 999px; cursor: pointer; font-size: 0.95rem; }
+    button:hover { background: #1d4ed8; }
+    .status { margin-top: 6px; font-size: 0.85rem; }
+    .status.error { color: #b91c1c; }
+    .status.ok { color: #15803d; }
+    .meal-item { padding: 6px 0; border-bottom: 1px dashed #e5e7eb; }
+    .meal-meta { font-size: 0.8rem; color: #6b7280; margin-left: 22px; }
+    .summary { font-size: 0.95rem; }
+  </style>
+</head>
 <body>
-    <script>
-        // --- Configuration ---
-        const AZURE_HOST = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
-        
-        // *** IMPORTANT: REPLACE 'GetMealsByArea' and 'PlaceOrder' with your Function Names and ADD your function key ('&code=YOUR_KEY') ***
-        const AZURE_FUNCTION_URL_GET_MEALS = AZURE_HOST + "/api/GetMealsByArea"; 
-        const AZURE_FUNCTION_URL_PLACE_ORDER = AZURE_HOST + "/api/PlaceOrder"; 
-        // ---------------------
 
-        let selectedMeals = [];
-        let currentArea = '';
-        let totalPreparationTime = 0;
-        const FIXED_PICKUP_TIME = 10; 
-        const FIXED_DELIVERY_TIME = 20; 
+<h1>Customer View</h1>
+<nav>
+  <a href="index.html">Home</a> |
+  <a href="restaurant.html">Restaurant View</a>
+</nav>
 
-        document.getElementById('placeOrderForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            placeOrder();
-        });
+<div class="card">
+  <h2>Select delivery area</h2>
+  <label for="areaSelect">Delivery area</label>
+  <select id="areaSelect">
+    <option value="">-- Select an area --</option>
+    <option value="Central">Central</option>
+    <option value="North">North</option>
+    <option value="South">South</option>
+  </select>
+  <button id="loadMealsBtn">Load meals</button>
+  <div id="loadStatus" class="status"></div>
+</div>
 
-        // --- FETCH MEALS FUNCTION (Addressing "Meals Not Loading") ---
-        async function fetchMeals() {
-            // ... (The rest of this function remains the same as provided previously) ...
-            
-            // The URL construction for the GET request:
-            const url = `${AZURE_FUNCTION_URL_GET_MEALS}?area=${currentArea}`;
-            console.log("Fetching meals from URL:", url); // Log the URL for debugging
+<div class="card">
+  <h2>Available meals</h2>
+  <div id="mealsContainer"></div>
+</div>
 
-            try {
-                const response = await fetch(url);
+<div class="card">
+  <h2>Your details</h2>
+  <label for="customerName">Name:</label>
+  <input id="customerName" placeholder="Your name" />
+  <label for="customerAddress">Address:</label>
+  <input id="customerAddress" placeholder="Your address" />
+  <button id="placeOrderBtn">Place order</button>
+  <div id="orderStatus" class="status"></div>
+</div>
 
-                if (!response.ok) {
-                    // This is where a 404 (Function not found) or 500 (Internal Server Error) would be caught
-                    throw new Error(`HTTP error! Status: ${response.status}. Response: ${await response.text()}`);
-                }
+<div class="card" id="confirmationCard" style="display:none;">
+  <h2>Order confirmation</h2>
+  <div id="orderSummary" class="summary"></div>
+</div>
 
-                const meals = await response.json(); 
-                // Assumes the JSON response includes the new 'restaurantName' field
-                renderMeals(meals); 
+<script>
+  // 🔴 IMPORTANT: REPLACE THESE TWO LINES with your real function URLs
+  // In Azure Portal → function → "Get Function URL" → copy and paste full URL between the quotes
+  const MEALS_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/meals";
+  const ORDER_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/submitOrder";
 
-            } catch (error) {
-                console.error('Error fetching meals:', error);
-                // ... (Error message box) ...
-            }
-        }
+  const areaSelect = document.getElementById("areaSelect");
+  const loadMealsBtn = document.getElementById("loadMealsBtn");
+  const mealsContainer = document.getElementById("mealsContainer");
+  const loadStatus = document.getElementById("loadStatus");
 
-        function renderMeals(meals) {
-            const mealsContainer = document.getElementById('mealsContainer');
-            mealsContainer.innerHTML = ''; 
+  const placeOrderBtn = document.getElementById("placeOrderBtn");
+  const orderStatus = document.getElementById("orderStatus");
+  const customerNameInput = document.getElementById("customerName");
+  const customerAddressInput = document.getElementById("customerAddress");
+  const confirmationCard = document.getElementById("confirmationCard");
+  const orderSummary = document.getElementById("orderSummary");
 
-            if (meals.length === 0) {
-                // ... (message for no meals) ...
-                return;
-            }
+  function setStatus(el, msg, type) {
+    el.textContent = msg || "";
+    el.classList.remove("error", "ok");
+    if (type) el.classList.add(type);
+  }
 
-            meals.forEach(meal => {
-                // ... (HTML construction) ...
-                detailsDiv.innerHTML = `
-                    <strong>${meal.dishName}</strong> 
-                    <span class="meal-price">$${meal.price.toFixed(2)}</span><br>
-                    <small>Restaurant: ${meal.restaurantName} | Prep: ${meal.prepTime} min</small>
-                `;
-                // ... (Append to container) ...
-            });
-            
-            // ... (Show order section) ...
-        }
+  function buildUrlWithArea(baseUrl, area) {
+    const sep = baseUrl.includes("?") ? "&" : "?";
+    return baseUrl + sep + "area=" + encodeURIComponent(area);
+  }
 
-        // ... (The rest of the script for handleMealSelection, updateTotalCost, and placeOrder remains the same) ...
-    </script>
+  async function loadMeals() {
+    const area = areaSelect.value;
+    confirmationCard.style.display = "none";
+    orderSummary.textContent = "";
+
+    if (!area) {
+      setStatus(loadStatus, "Please select a delivery area.", "error");
+      mealsContainer.innerHTML = "";
+      return;
+    }
+
+    setStatus(loadStatus, "Loading meals...", "ok");
+    mealsContainer.innerHTML = "";
+
+    try {
+      const url = buildUrlWithArea(MEALS_API_URL, area);
+      console.log("Calling meals API:", url);
+      const res = await fetch(url);
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("Meals API error:", res.status, txt);
+        throw new Error("HTTP " + res.status);
+      }
+
+      const data = await res.json();
+      console.log("Meals response:", data);
+      const meals = Array.isArray(data) ? data : (data.meals || data.value || []);
+
+      if (!meals.length) {
+        mealsContainer.innerHTML = "<p>No meals available for this area yet.</p>";
+        setStatus(loadStatus, "No meals found.", "ok");
+        return;
+      }
+
+      mealsContainer.innerHTML = meals.map((m, i) => {
+        const name = m.Name || m.name || "Unnamed meal";
+        const price = Number(m.Price ?? m.price ?? 0);
+        const prep = Number(m.EstimatedPrepTime ?? m.prepTime ?? 0);
+        const desc = m.Description || m.description || "";
+
+        return `
+          <div class="meal-item">
+            <label>
+              <input type="checkbox"
+                     class="meal-checkbox"
+                     data-name="${name.replace(/"/g, "&quot;")}"
+                     data-price="${price}"
+                     data-prep="${prep}">
+              <strong>${name}</strong> – €${price.toFixed(2)}
+            </label>
+            <div class="meal-meta">
+              Prep: ${prep} min${desc ? " · " + desc : ""}
+            </div>
+          </div>`;
+      }).join("");
+
+      setStatus(loadStatus, "Meals loaded.", "ok");
+    } catch (err) {
+      console.error(err);
+      setStatus(loadStatus, "Failed to load meals.", "error");
+    }
+  }
+
+  async function placeOrder() {
+    const name = customerNameInput.value.trim();
+    const address = customerAddressInput.value.trim();
+    const area = areaSelect.value;
+
+    confirmationCard.style.display = "none";
+    orderSummary.textContent = "";
+
+    if (!area) {
+      setStatus(orderStatus, "Please select a delivery area.", "error");
+      return;
+    }
+    if (!name || !address) {
+      setStatus(orderStatus, "Please fill in your name and address.", "error");
+      return;
+    }
+
+    const selected = Array.from(document.querySelectorAll(".meal-checkbox:checked"));
+    if (!selected.length) {
+      setStatus(orderStatus, "Select at least one meal.", "error");
+      return;
+    }
+
+    const items = selected.map(cb => ({
+      name: cb.dataset.name,
+      price: Number(cb.dataset.price),
+      prepTime: Number(cb.dataset.prep)
+    }));
+
+    const totalCost = items.reduce((sum, it) => sum + it.price, 0);
+    const totalPrep = items.reduce((sum, it) => sum + it.prepTime, 0);
+    const estimatedTime = totalPrep + 25; // simple rule
+
+    const payload = {
+      customerName: name,
+      customerAddress: address,
+      deliveryArea: area,
+      items,
+      totalCost,
+      estimatedDeliveryTime: estimatedTime
+    };
+
+    try {
+      setStatus(orderStatus, "Submitting order...", "ok");
+      const res = await fetch(ORDER_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("Order API error:", res.status, txt);
+        throw new Error("HTTP " + res.status);
+      }
+
+      setStatus(orderStatus, "Order placed!", "ok");
+      confirmationCard.style.display = "block";
+      orderSummary.innerHTML = `
+        <p>Thank you, <strong>${name}</strong>!</p>
+        <p>Total cost: <strong>€${totalCost.toFixed(2)}</strong></p>
+        <p>Estimated delivery time: <strong>${estimatedTime} minutes</strong></p>
+      `;
+    } catch (err) {
+      console.error(err);
+      setStatus(orderStatus, "Order failed.", "error");
+    }
+  }
+
+  loadMealsBtn.addEventListener("click", loadMeals);
+  placeOrderBtn.addEventListener("click", placeOrder);
+</script>
 </body>
 </html>
