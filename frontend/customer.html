@@ -150,7 +150,6 @@
       </div>
     </div>
 
-    <!-- Area + Load meals -->
     <div class="card">
       <h2>Select delivery area</h2>
       <label for="deliveryArea">Delivery area</label>
@@ -163,14 +162,12 @@
       <div id="loadStatus" class="status"></div>
     </div>
 
-    <!-- Meals -->
     <div class="card">
       <h2>Available meals</h2>
       <div id="mealsList" class="meals-list"></div>
       <div id="selectionSummary" class="summary"></div>
     </div>
 
-    <!-- Order -->
     <div class="card">
       <h2>Your details</h2>
       <label for="customerName">Name:</label>
@@ -185,11 +182,11 @@
   </div>
 
   <script>
-    // ---- CONFIG: change these URLs if needed ----
-    const FUNCTION_BASE =
-      "food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
-
-    const GET_MEALS_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/meals";
+    // 🔴 MUY IMPORTANTE:
+    // Sustituye estos dos strings por los URLs COMPLETOS de "Get function URL"
+    // 1) HTTPGetMealsByArea
+    // 2) HTTPSubmitOrder
+    const GET_MEALS_URL   = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/meals";
     const SUBMIT_ORDER_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/submitOrder";
 
     const deliveryAreaSelect = document.getElementById("deliveryArea");
@@ -215,11 +212,16 @@
     }
 
     function normalizeMeals(data) {
-      // Try to be flexible with the backend shape
       if (Array.isArray(data)) return data;
       if (Array.isArray(data.meals)) return data.meals;
-      if (Array.isArray(data.results)) return data.results;
+      if (Array.isArray(data.value)) return data.value;
       return [];
+    }
+
+    function buildUrlWithParams(baseUrl, params) {
+      const url = new URL(baseUrl);
+      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+      return url.toString();
     }
 
     async function loadMeals() {
@@ -232,10 +234,11 @@
 
       try {
         loadMealsBtn.disabled = true;
-        const url = GET_MEALS_URL + "?area=" + encodeURIComponent(area);
+        const url = buildUrlWithParams(GET_MEALS_URL, { area });
 
         const response = await fetch(url);
-        const data = await response.json().catch(() => ({}));
+        let data = {};
+        try { data = await response.json(); } catch {}
 
         if (!response.ok) {
           const msg = data.message || JSON.stringify(data) || "Unknown error";
@@ -251,7 +254,6 @@
           return;
         }
 
-        // Render meals
         mealsListEl.innerHTML = "";
         meals.forEach((meal, index) => {
           const restaurantName = meal.restaurantName || meal.RestaurantName || meal.restaurant || "Restaurant";
@@ -322,7 +324,7 @@
       const selected = getSelectedMeals();
       if (!selected.length) {
         selectionSummaryEl.textContent = "";
-        return;
+        return { totalPrice: 0, estimatedTime: 0 };
       }
 
       let totalPrice = 0;
@@ -340,8 +342,8 @@
         totalPrep += prep;
       });
 
-      const fixedPickup = 10;  // minutes
-      const fixedDelivery = 20; // minutes
+      const fixedPickup = 10;
+      const fixedDelivery = 20;
       const estimatedTime = totalPrep + fixedPickup + fixedDelivery;
 
       selectionSummaryEl.innerHTML =
@@ -362,9 +364,7 @@
       clearStatus(orderStatusEl);
 
       const name = document.getElementById("customerName").value.trim();
-      const address = document
-        .getElementById("customerAddress")
-        .value.trim();
+      const address = document.getElementById("customerAddress").value.trim();
       const area = deliveryAreaSelect.value;
       const selected = getSelectedMeals();
 
@@ -381,9 +381,8 @@
       const totalCost = summary.totalPrice;
       const estimatedTimeMinutes = summary.estimatedTime;
 
-      // Build a reasonable order payload.
-      // If your Function complains about missing fields, adjust the names accordingly.
-      const items = selected.map((meal) => ({
+      // 👇 IMPORTANTE: el backend pide `selectedMeals`
+      const selectedMeals = selected.map((meal) => ({
         restaurantName:
           meal.restaurantName || meal.RestaurantName || meal.restaurant,
         dishName: meal.dishName || meal.DishName || meal.name,
@@ -401,7 +400,7 @@
         customerName: name,
         customerAddress: address,
         area,
-        items,
+        selectedMeals,            // 👈 nombre exacto que pide tu función
         totalCost,
         estimatedTimeMinutes
       };
@@ -414,7 +413,8 @@
           body: JSON.stringify(payload)
         });
 
-        const data = await response.json().catch(() => ({}));
+        let data = {};
+        try { data = await response.json(); } catch {}
 
         if (!response.ok) {
           const msg = data.message || JSON.stringify(data) || "Unknown error";
@@ -445,7 +445,7 @@
     loadMealsBtn.addEventListener("click", loadMeals);
     placeOrderBtn.addEventListener("click", submitOrder);
 
-    // Optional: load default area on first load
+    // Cargar comidas al entrar
     loadMeals();
   </script>
 </body>
