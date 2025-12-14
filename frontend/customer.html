@@ -2,230 +2,451 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Customer View - Cloud Food Delivery</title>
+  <title>Customer View</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f4f8; }
-    h1 { margin-bottom: 8px; }
-    nav a { color: #2563eb; text-decoration: none; margin-right: 6px; }
-    nav a:hover { text-decoration: underline; }
-    .card { background: #ffffff; padding: 20px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-    h2 { margin-top: 0; margin-bottom: 10px; }
-    input, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.95rem; }
-    button { background: #2563eb; color: #ffffff; border: none; padding: 8px 18px; border-radius: 999px; cursor: pointer; font-size: 0.95rem; }
-    button:hover { background: #1d4ed8; }
-    .status { margin-top: 6px; font-size: 0.85rem; }
-    .status.error { color: #b91c1c; }
-    .status.ok { color: #15803d; }
-    .meal-item { padding: 6px 0; border-bottom: 1px dashed #e5e7eb; }
-    .meal-meta { font-size: 0.8rem; color: #6b7280; margin-left: 22px; }
-    .summary { font-size: 0.95rem; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 40px 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .page {
+      width: 100%;
+      max-width: 1000px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .nav h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    .nav a {
+      color: #2563eb;
+      text-decoration: none;
+      margin-left: 12px;
+      font-size: 14px;
+    }
+    .nav a:hover {
+      text-decoration: underline;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px 22px 28px;
+      box-shadow: 0 10px 35px rgba(15, 23, 42, 0.12);
+      margin-bottom: 18px;
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d4d4d8;
+      font-size: 14px;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    select:focus, input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      background: #2563eb;
+      color: white;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    .status.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .status.success {
+      background: #ecfdf3;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .meals-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .meal {
+      border-radius: 12px;
+      border: 1px solid #e4e4e7;
+      padding: 10px 12px;
+      background: #fafafa;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .meal h3 {
+      margin: 0 0 4px;
+      font-size: 15px;
+    }
+    .meal small {
+      display: block;
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .meal p {
+      margin: 0;
+      font-size: 13px;
+      color: #4b5563;
+    }
+    .summary {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #111827;
+    }
+    .summary strong {
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
+  <div class="page">
+    <div class="nav">
+      <h1>Customer View</h1>
+      <div>
+        <a href="index.html">Home</a>
+        <a href="restaurant.html">Restaurant View</a>
+      </div>
+    </div>
 
-<h1>Customer View</h1>
-<nav>
-  <a href="index.html">Home</a> |
-  <a href="restaurant.html">Restaurant View</a>
-</nav>
+    <!-- Area + Load meals -->
+    <div class="card">
+      <h2>Select delivery area</h2>
+      <label for="deliveryArea">Delivery area</label>
+      <select id="deliveryArea">
+        <option value="Central">Central</option>
+        <option value="North">North</option>
+        <option value="South">South</option>
+      </select>
+      <button id="loadMealsBtn">Load meals</button>
+      <div id="loadStatus" class="status"></div>
+    </div>
 
-<div class="card">
-  <h2>Select delivery area</h2>
-  <label for="areaSelect">Delivery area</label>
-  <select id="areaSelect">
-    <option value="">-- Select an area --</option>
-    <option value="Central">Central</option>
-    <option value="North">North</option>
-    <option value="South">South</option>
-  </select>
-  <button id="loadMealsBtn">Load meals</button>
-  <div id="loadStatus" class="status"></div>
-</div>
+    <!-- Meals -->
+    <div class="card">
+      <h2>Available meals</h2>
+      <div id="mealsList" class="meals-list"></div>
+      <div id="selectionSummary" class="summary"></div>
+    </div>
 
-<div class="card">
-  <h2>Available meals</h2>
-  <div id="mealsContainer"></div>
-</div>
+    <!-- Order -->
+    <div class="card">
+      <h2>Your details</h2>
+      <label for="customerName">Name:</label>
+      <input id="customerName" type="text" placeholder="Your name" />
 
-<div class="card">
-  <h2>Your details</h2>
-  <label for="customerName">Name:</label>
-  <input id="customerName" placeholder="Your name" />
-  <label for="customerAddress">Address:</label>
-  <input id="customerAddress" placeholder="Your address" />
-  <button id="placeOrderBtn">Place order</button>
-  <div id="orderStatus" class="status"></div>
-</div>
+      <label for="customerAddress">Address:</label>
+      <input id="customerAddress" type="text" placeholder="Your address" />
 
-<div class="card" id="confirmationCard" style="display:none;">
-  <h2>Order confirmation</h2>
-  <div id="orderSummary" class="summary"></div>
-</div>
+      <button id="placeOrderBtn">Place order</button>
+      <div id="orderStatus" class="status"></div>
+    </div>
+  </div>
 
-<script>
-  // 🔴 IMPORTANT: REPLACE THESE TWO LINES with your real function URLs
-  // In Azure Portal → function → "Get Function URL" → copy and paste full URL between the quotes
-  const MEALS_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/meals";
-  const ORDER_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/submitOrder";
+  <script>
+    // ---- CONFIG: change these URLs if needed ----
+    const FUNCTION_BASE =
+      "food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
 
-  const areaSelect = document.getElementById("areaSelect");
-  const loadMealsBtn = document.getElementById("loadMealsBtn");
-  const mealsContainer = document.getElementById("mealsContainer");
-  const loadStatus = document.getElementById("loadStatus");
+    const GET_MEALS_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/meals";
+    const SUBMIT_ORDER_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/submitOrder";
 
-  const placeOrderBtn = document.getElementById("placeOrderBtn");
-  const orderStatus = document.getElementById("orderStatus");
-  const customerNameInput = document.getElementById("customerName");
-  const customerAddressInput = document.getElementById("customerAddress");
-  const confirmationCard = document.getElementById("confirmationCard");
-  const orderSummary = document.getElementById("orderSummary");
+    const deliveryAreaSelect = document.getElementById("deliveryArea");
+    const loadMealsBtn = document.getElementById("loadMealsBtn");
+    const mealsListEl = document.getElementById("mealsList");
+    const loadStatusEl = document.getElementById("loadStatus");
+    const selectionSummaryEl = document.getElementById("selectionSummary");
 
-  function setStatus(el, msg, type) {
-    el.textContent = msg || "";
-    el.classList.remove("error", "ok");
-    if (type) el.classList.add(type);
-  }
+    const placeOrderBtn = document.getElementById("placeOrderBtn");
+    const orderStatusEl = document.getElementById("orderStatus");
 
-  function buildUrlWithArea(baseUrl, area) {
-    const sep = baseUrl.includes("?") ? "&" : "?";
-    return baseUrl + sep + "area=" + encodeURIComponent(area);
-  }
+    let currentMeals = [];
 
-  async function loadMeals() {
-    const area = areaSelect.value;
-    confirmationCard.style.display = "none";
-    orderSummary.textContent = "";
-
-    if (!area) {
-      setStatus(loadStatus, "Please select a delivery area.", "error");
-      mealsContainer.innerHTML = "";
-      return;
+    function showStatus(el, message, type) {
+      el.textContent = message;
+      el.className = "status " + type;
+      el.style.display = "block";
     }
 
-    setStatus(loadStatus, "Loading meals...", "ok");
-    mealsContainer.innerHTML = "";
+    function clearStatus(el) {
+      el.style.display = "none";
+      el.textContent = "";
+    }
 
-    try {
-      const url = buildUrlWithArea(MEALS_API_URL, area);
-      console.log("Calling meals API:", url);
-      const res = await fetch(url);
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error("Meals API error:", res.status, txt);
-        throw new Error("HTTP " + res.status);
+    function normalizeMeals(data) {
+      // Try to be flexible with the backend shape
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data.meals)) return data.meals;
+      if (Array.isArray(data.results)) return data.results;
+      return [];
+    }
+
+    async function loadMeals() {
+      clearStatus(loadStatusEl);
+      mealsListEl.innerHTML = "";
+      selectionSummaryEl.textContent = "";
+      currentMeals = [];
+
+      const area = deliveryAreaSelect.value;
+
+      try {
+        loadMealsBtn.disabled = true;
+        const url = GET_MEALS_URL + "?area=" + encodeURIComponent(area);
+
+        const response = await fetch(url);
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const msg = data.message || JSON.stringify(data) || "Unknown error";
+          showStatus(loadStatusEl, "Failed to load meals: " + msg, "error");
+          return;
+        }
+
+        const meals = normalizeMeals(data);
+        currentMeals = meals;
+
+        if (!meals.length) {
+          mealsListEl.innerHTML = "<p>No meals found for this area yet.</p>";
+          return;
+        }
+
+        // Render meals
+        mealsListEl.innerHTML = "";
+        meals.forEach((meal, index) => {
+          const restaurantName = meal.restaurantName || meal.RestaurantName || meal.restaurant || "Restaurant";
+          const dishName = meal.dishName || meal.DishName || meal.name || "Dish";
+          const description = meal.description || meal.Description || "";
+          const prepTime =
+            meal.prepTimeMinutes ||
+            meal.prep_time_minutes ||
+            meal.prepTime ||
+            0;
+          const price = meal.price ?? meal.Price ?? 0;
+
+          const wrapper = document.createElement("label");
+          wrapper.className = "meal";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.dataset.index = String(index);
+          checkbox.style.marginTop = "4px";
+
+          const content = document.createElement("div");
+          const title = document.createElement("h3");
+          title.textContent = dishName + " – $" + price;
+          const meta = document.createElement("small");
+          meta.textContent =
+            restaurantName + (prepTime ? " · " + prepTime + " min prep" : "");
+          const desc = document.createElement("p");
+          desc.textContent = description;
+
+          content.appendChild(title);
+          content.appendChild(meta);
+          content.appendChild(desc);
+
+          wrapper.appendChild(checkbox);
+          wrapper.appendChild(content);
+
+          mealsListEl.appendChild(wrapper);
+        });
+
+        showStatus(loadStatusEl, "Meals loaded for area: " + area, "success");
+      } catch (err) {
+        console.error(err);
+        showStatus(
+          loadStatusEl,
+          "Network error loading meals. Check Function logs.",
+          "error"
+        );
+      } finally {
+        loadMealsBtn.disabled = false;
       }
+    }
 
-      const data = await res.json();
-      console.log("Meals response:", data);
-      const meals = Array.isArray(data) ? data : (data.meals || data.value || []);
+    function getSelectedMeals() {
+      const checkboxes = mealsListEl.querySelectorAll('input[type="checkbox"]');
+      const selected = [];
+      checkboxes.forEach((cb) => {
+        if (cb.checked) {
+          const idx = parseInt(cb.dataset.index, 10);
+          if (!isNaN(idx) && currentMeals[idx]) {
+            selected.push(currentMeals[idx]);
+          }
+        }
+      });
+      return selected;
+    }
 
-      if (!meals.length) {
-        mealsContainer.innerHTML = "<p>No meals available for this area yet.</p>";
-        setStatus(loadStatus, "No meals found.", "ok");
+    function updateSelectionSummary() {
+      const selected = getSelectedMeals();
+      if (!selected.length) {
+        selectionSummaryEl.textContent = "";
         return;
       }
 
-      mealsContainer.innerHTML = meals.map((m, i) => {
-        const name = m.Name || m.name || "Unnamed meal";
-        const price = Number(m.Price ?? m.price ?? 0);
-        const prep = Number(m.EstimatedPrepTime ?? m.prepTime ?? 0);
-        const desc = m.Description || m.description || "";
-
-        return `
-          <div class="meal-item">
-            <label>
-              <input type="checkbox"
-                     class="meal-checkbox"
-                     data-name="${name.replace(/"/g, "&quot;")}"
-                     data-price="${price}"
-                     data-prep="${prep}">
-              <strong>${name}</strong> – €${price.toFixed(2)}
-            </label>
-            <div class="meal-meta">
-              Prep: ${prep} min${desc ? " · " + desc : ""}
-            </div>
-          </div>`;
-      }).join("");
-
-      setStatus(loadStatus, "Meals loaded.", "ok");
-    } catch (err) {
-      console.error(err);
-      setStatus(loadStatus, "Failed to load meals.", "error");
-    }
-  }
-
-  async function placeOrder() {
-    const name = customerNameInput.value.trim();
-    const address = customerAddressInput.value.trim();
-    const area = areaSelect.value;
-
-    confirmationCard.style.display = "none";
-    orderSummary.textContent = "";
-
-    if (!area) {
-      setStatus(orderStatus, "Please select a delivery area.", "error");
-      return;
-    }
-    if (!name || !address) {
-      setStatus(orderStatus, "Please fill in your name and address.", "error");
-      return;
-    }
-
-    const selected = Array.from(document.querySelectorAll(".meal-checkbox:checked"));
-    if (!selected.length) {
-      setStatus(orderStatus, "Select at least one meal.", "error");
-      return;
-    }
-
-    const items = selected.map(cb => ({
-      name: cb.dataset.name,
-      price: Number(cb.dataset.price),
-      prepTime: Number(cb.dataset.prep)
-    }));
-
-    const totalCost = items.reduce((sum, it) => sum + it.price, 0);
-    const totalPrep = items.reduce((sum, it) => sum + it.prepTime, 0);
-    const estimatedTime = totalPrep + 25; // simple rule
-
-    const payload = {
-      customerName: name,
-      customerAddress: address,
-      deliveryArea: area,
-      items,
-      totalCost,
-      estimatedDeliveryTime: estimatedTime
-    };
-
-    try {
-      setStatus(orderStatus, "Submitting order...", "ok");
-      const res = await fetch(ORDER_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+      let totalPrice = 0;
+      let totalPrep = 0;
+      selected.forEach((meal) => {
+        const price = Number(meal.price ?? meal.Price ?? 0);
+        const prep =
+          Number(
+            meal.prepTimeMinutes ||
+              meal.prep_time_minutes ||
+              meal.prepTime ||
+              0
+          ) || 0;
+        totalPrice += price;
+        totalPrep += prep;
       });
 
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error("Order API error:", res.status, txt);
-        throw new Error("HTTP " + res.status);
+      const fixedPickup = 10;  // minutes
+      const fixedDelivery = 20; // minutes
+      const estimatedTime = totalPrep + fixedPickup + fixedDelivery;
+
+      selectionSummaryEl.innerHTML =
+        "Selected " +
+        selected.length +
+        " meal(s). Total: <strong>$" +
+        totalPrice.toFixed(2) +
+        "</strong>. Estimated delivery time: <strong>" +
+        estimatedTime +
+        " minutes</strong>.";
+
+      return { totalPrice, estimatedTime };
+    }
+
+    mealsListEl.addEventListener("change", updateSelectionSummary);
+
+    async function submitOrder() {
+      clearStatus(orderStatusEl);
+
+      const name = document.getElementById("customerName").value.trim();
+      const address = document
+        .getElementById("customerAddress")
+        .value.trim();
+      const area = deliveryAreaSelect.value;
+      const selected = getSelectedMeals();
+
+      if (!name || !address) {
+        showStatus(orderStatusEl, "Please enter your name and address.", "error");
+        return;
+      }
+      if (!selected.length) {
+        showStatus(orderStatusEl, "Please select at least one meal.", "error");
+        return;
       }
 
-      setStatus(orderStatus, "Order placed!", "ok");
-      confirmationCard.style.display = "block";
-      orderSummary.innerHTML = `
-        <p>Thank you, <strong>${name}</strong>!</p>
-        <p>Total cost: <strong>€${totalCost.toFixed(2)}</strong></p>
-        <p>Estimated delivery time: <strong>${estimatedTime} minutes</strong></p>
-      `;
-    } catch (err) {
-      console.error(err);
-      setStatus(orderStatus, "Order failed.", "error");
-    }
-  }
+      const summary = updateSelectionSummary();
+      const totalCost = summary.totalPrice;
+      const estimatedTimeMinutes = summary.estimatedTime;
 
-  loadMealsBtn.addEventListener("click", loadMeals);
-  placeOrderBtn.addEventListener("click", placeOrder);
-</script>
+      // Build a reasonable order payload.
+      // If your Function complains about missing fields, adjust the names accordingly.
+      const items = selected.map((meal) => ({
+        restaurantName:
+          meal.restaurantName || meal.RestaurantName || meal.restaurant,
+        dishName: meal.dishName || meal.DishName || meal.name,
+        price: Number(meal.price ?? meal.Price ?? 0),
+        prepTimeMinutes:
+          Number(
+            meal.prepTimeMinutes ||
+              meal.prep_time_minutes ||
+              meal.prepTime ||
+              0
+          ) || 0
+      }));
+
+      const payload = {
+        customerName: name,
+        customerAddress: address,
+        area,
+        items,
+        totalCost,
+        estimatedTimeMinutes
+      };
+
+      try {
+        placeOrderBtn.disabled = true;
+        const response = await fetch(SUBMIT_ORDER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const msg = data.message || JSON.stringify(data) || "Unknown error";
+          showStatus(orderStatusEl, "Error placing order: " + msg, "error");
+        } else {
+          showStatus(
+            orderStatusEl,
+            "Order placed! 🎉 Total $" +
+              totalCost.toFixed(2) +
+              ", ETA " +
+              estimatedTimeMinutes +
+              " minutes.",
+            "success"
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus(
+          orderStatusEl,
+          "Network error placing order. Check Function logs.",
+          "error"
+        );
+      } finally {
+        placeOrderBtn.disabled = false;
+      }
+    }
+
+    loadMealsBtn.addEventListener("click", loadMeals);
+    placeOrderBtn.addEventListener("click", submitOrder);
+
+    // Optional: load default area on first load
+    loadMeals();
+  </script>
 </body>
 </html>
