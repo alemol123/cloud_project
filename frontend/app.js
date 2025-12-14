@@ -1,5 +1,6 @@
 // ---------- CONFIG ----------
-const API_BASE = "https://food-functions-g2.azurewebsites.net/api";
+const API_BASE = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api";
+
 
 
 
@@ -79,7 +80,7 @@ async function handleLoadMeals() {
   mealsContainer.textContent = "Loading meals…";
 
   try {
-    const res  = await fetch(`${API_BASE}/meals?area=${encodeURIComponent(area)}`);
+    const res = await fetch(`${API_BASE}/HTTPGetMealsByArea?area=${encodeURIComponent(area)}`);
     const data = await res.json();
 
     if (!res.ok || data.status !== "ok") {
