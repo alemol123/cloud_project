@@ -147,9 +147,10 @@
 </div>
 
 <script>
-  // 🔧 TODO: put your own Azure Functions URLs here
-  const MEALS_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPGetMealsByArea";
-  const ORDER_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPSubmitOrder";
+ const BASE_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
+
+ const MEALS_API_URL = `${BASE_URL}/api/HTTPGetMealsByArea`;
+ const ORDER_API_URL = `${BASE_URL}/api/HTTPSubmitOrder`;
 
   const areaSelect = document.getElementById("areaSelect");
   const loadMealsBtn = document.getElementById("loadMealsBtn");
