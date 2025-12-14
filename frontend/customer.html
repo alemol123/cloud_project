@@ -5,76 +5,94 @@
   <title>Customer View - Cloud Food Delivery</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 1.5rem;
+      padding: 24px 16px 40px;
       background: #f5f7fb;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.7rem;
     }
     nav a {
-      margin-right: 0.5rem;
+      margin-left: 4px;
+      margin-right: 4px;
       text-decoration: none;
       color: #2563eb;
       font-weight: 500;
     }
-    nav a:last-child {
-      margin-right: 0;
-    }
-    h1 {
-      margin: 0;
-      font-size: 1.6rem;
-    }
-    h2 {
-      margin-top: 1.5rem;
-      margin-bottom: 0.5rem;
-      font-size: 1.2rem;
-    }
     .card {
       background: #ffffff;
-      border-radius: 0.75rem;
-      padding: 1rem 1.25rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
     }
     label {
       display: block;
-      margin-bottom: 0.4rem;
-      font-size: 0.95rem;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
     }
-    select, input[type="text"] {
+    select,
+    input[type="text"] {
       width: 100%;
-      padding: 0.45rem 0.6rem;
-      border-radius: 0.5rem;
+      padding: 8px 10px;
+      border-radius: 10px;
       border: 1px solid #d1d5db;
       font-size: 0.95rem;
-      box-sizing: border-box;
+      outline: none;
+    }
+    select:focus,
+    input[type="text"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
     }
     button {
-      margin-top: 0.5rem;
-      padding: 0.5rem 0.9rem;
+      margin-top: 10px;
+      padding: 8px 18px;
       border-radius: 999px;
       border: none;
       background: #2563eb;
       color: white;
       font-weight: 500;
       cursor: pointer;
+      font-size: 0.95rem;
     }
     button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
+    .status {
+      margin-top: 6px;
+      font-size: 0.85rem;
+    }
+    .status.error {
+      color: #b91c1c;
+    }
+    .status.ok {
+      color: #15803d;
+    }
     .meals-list {
-      margin-top: 0.5rem;
+      margin-top: 4px;
     }
     .meal-item {
-      padding: 0.4rem 0;
+      padding: 6px 0;
       border-bottom: 1px dashed #e5e7eb;
       font-size: 0.95rem;
     }
@@ -84,16 +102,7 @@
     .meal-meta {
       font-size: 0.8rem;
       color: #6b7280;
-    }
-    .status {
-      margin-top: 0.4rem;
-      font-size: 0.85rem;
-    }
-    .status.error {
-      color: #b91c1c;
-    }
-    .status.ok {
-      color: #15803d;
+      margin-left: 23px;
     }
     .summary {
       font-size: 0.95rem;
@@ -109,6 +118,7 @@
   </nav>
 </header>
 
+<!-- Area selection -->
 <div class="card">
   <h2>Select delivery area</h2>
   <label for="areaSelect">Delivery area</label>
@@ -122,13 +132,15 @@
   <div id="loadStatus" class="status"></div>
 </div>
 
+<!-- Meals list -->
 <div class="card">
   <h2>Available meals</h2>
   <div id="mealsContainer" class="meals-list">
-    <!-- Meals will be injected here -->
+    <!-- Meals injected here -->
   </div>
 </div>
 
+<!-- Customer details / order -->
 <div class="card">
   <h2>Your details</h2>
   <label for="customerName">Name:</label>
@@ -141,17 +153,18 @@
   <div id="orderStatus" class="status"></div>
 </div>
 
+<!-- Confirmation -->
 <div class="card" id="confirmationCard" style="display: none;">
   <h2>Order confirmation</h2>
   <div id="orderSummary" class="summary"></div>
 </div>
 
 <script>
- const BASE_URL = "food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
+  // === Azure Function URLs (full paths!) ===
+  const MEALS_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPGetMealsByArea";
+  const ORDER_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPSubmitOrder";
 
- const MEALS_API_URL = `${BASE_URL}/api/HTTPGetMealsByArea`;
- const ORDER_API_URL = `${BASE_URL}/api/HTTPSubmitOrder`;
-
+  // === DOM elements ===
   const areaSelect = document.getElementById("areaSelect");
   const loadMealsBtn = document.getElementById("loadMealsBtn");
   const mealsContainer = document.getElementById("mealsContainer");
@@ -164,16 +177,16 @@
   const confirmationCard = document.getElementById("confirmationCard");
   const orderSummary = document.getElementById("orderSummary");
 
-  // Helper: render status messages
   function setStatus(el, message, type) {
     el.textContent = message || "";
     el.classList.remove("error", "ok");
     if (type) el.classList.add(type);
   }
 
-  // 🔹 Load meals for the selected area
+  // === Load meals by area ===
   async function loadMeals() {
     const area = areaSelect.value;
+
     confirmationCard.style.display = "none";
     orderSummary.textContent = "";
 
@@ -187,17 +200,20 @@
     mealsContainer.innerHTML = "";
 
     try {
-      const url = `${MEALS_API_URL}?area=${encodeURIComponent(area)}`;
-      const response = await fetch(url);
+      const url = MEALS_API_URL + "?area=" + encodeURIComponent(area);
+      console.log("Calling meals API:", url);
 
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const txt = await response.text();
+        console.error("Meals API error:", response.status, txt);
+        throw new Error("HTTP " + response.status);
       }
 
       const data = await response.json();
-      console.log("Meals response:", data); // helpful for debugging in the browser
+      console.log("Meals response:", data);
 
-      const meals = Array.isArray(data) ? data : data.meals || [];
+      const meals = Array.isArray(data) ? data : (data.meals || data.value || []);
 
       if (!meals.length) {
         mealsContainer.innerHTML = "<p>No meals available for this area yet.</p>";
@@ -205,37 +221,34 @@
         return;
       }
 
-      // Render meals list with checkboxes
       mealsContainer.innerHTML = meals.map((m, index) => {
-        // Adjust these property names to match your Table entities
-        const id = m.RowKey || m.id || `meal-${index}`;
+        const id   = m.RowKey || m.id || ("meal-" + index);
         const name = m.Name || m.name || "Unnamed meal";
         const price = parseFloat(m.Price ?? m.price ?? 0);
-        const prep = parseInt(m.EstimatedPrepTime ?? m.prepTime ?? 0, 10);
-        const desc = m.Description || m.description || "";
+        const prep  = parseInt(m.EstimatedPrepTime ?? m.prepTime ?? 0, 10);
+        const desc  = m.Description || m.description || "";
 
         return `
           <div class="meal-item">
             <label>
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 class="meal-checkbox"
                 data-id="${id}"
-                data-name="${name.replace(/"/g, '&quot;')}"
+                data-name="${name.replace(/"/g, "&quot;")}"
                 data-price="${price || 0}"
                 data-prep="${prep || 0}"
               />
               <strong>${name}</strong> - €${(price || 0).toFixed(2)}
             </label>
             <div class="meal-meta">
-              Prep: ${(prep || 0)} min
-              ${desc ? " · " + desc : ""}
+              Prep: ${(prep || 0)} min${desc ? " · " + desc : ""}
             </div>
           </div>
         `;
       }).join("");
 
-      setStatus(loadStatus, `Loaded ${meals.length} meal(s).`, "ok");
+      setStatus(loadStatus, "Loaded " + meals.length + " meal(s).", "ok");
     } catch (err) {
       console.error("Error loading meals:", err);
       setStatus(loadStatus, "Error loading meals. Check console and Function logs.", "error");
@@ -243,20 +256,19 @@
     }
   }
 
-  // 🔹 Place order
+  // === Place order ===
   async function placeOrder() {
     const name = customerNameInput.value.trim();
     const address = customerAddressInput.value.trim();
     const area = areaSelect.value;
 
+    confirmationCard.style.display = "none";
+    orderSummary.textContent = "";
+
     const selectedCheckboxes = Array.from(
       document.querySelectorAll(".meal-checkbox:checked")
     );
 
-    confirmationCard.style.display = "none";
-    orderSummary.textContent = "";
-
-    // Basic validation
     if (!area) {
       setStatus(orderStatus, "Please select a delivery area first.", "error");
       return;
@@ -270,7 +282,6 @@
       return;
     }
 
-    // Build order object
     const items = selectedCheckboxes.map(cb => ({
       id: cb.dataset.id,
       name: cb.dataset.name,
@@ -282,8 +293,8 @@
     const totalCost = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const totalPrepTime = items.reduce((sum, item) => sum + item.prepTime * item.quantity, 0);
 
-    // Simplified delivery time from the brief
-    const FIXED_PICKUP = 10;  // minutes
+    // simple delivery time rule
+    const FIXED_PICKUP = 10;   // minutes
     const FIXED_DELIVERY = 15; // minutes
     const estimatedDeliveryTime = totalPrepTime + FIXED_PICKUP + FIXED_DELIVERY;
 
@@ -297,7 +308,6 @@
     };
 
     console.log("Order payload:", orderPayload);
-
     setStatus(orderStatus, "Submitting order...", "ok");
 
     try {
@@ -308,17 +318,15 @@
       });
 
       if (!response.ok) {
-        // This is where you could also log to an "invalid orders" queue Function
-        throw new Error(`HTTP ${response.status}`);
+        const txt = await response.text();
+        console.error("Order API error:", response.status, txt);
+        throw new Error("HTTP " + response.status);
       }
 
-      // If your Azure Function returns additional data you can use it here:
       const result = await response.json().catch(() => ({}));
       console.log("Order response:", result);
 
       setStatus(orderStatus, "Order placed successfully!", "ok");
-
-      // Show confirmation
       confirmationCard.style.display = "block";
       orderSummary.innerHTML = `
         <p>Thank you, <strong>${name}</strong>! Your order has been placed.</p>
@@ -331,7 +339,6 @@
     }
   }
 
-  // Wire up buttons
   loadMealsBtn.addEventListener("click", loadMeals);
   placeOrderBtn.addEventListener("click", placeOrder);
 </script>
