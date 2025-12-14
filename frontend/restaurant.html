@@ -1,62 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Restaurant View</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f4f8; }
+    .card { background: white; padding: 20px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    input, textarea, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    button { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #1e4fcf; }
+    .error { color: #b91c1c; }
+    .ok { color: #15803d; }
+  </style>
 </head>
 <body>
-  <h1>Restaurant View</h1>
-  <nav>
-    <a href="index.html">Home</a> |
-    <a href="customer.html">Customer View</a>
-  </nav>
 
-  <form id="meal-form">
-    <label>
-      Restaurant name:
-      <input id="restaurant-name" type="text" required>
-    </label>
-    <br>
-    <label>
-      Dish name:
-      <input id="dish-name" type="text" required>
-    </label>
-    <br>
-    <label>
-      Description:
-      <textarea id="dish-description" required></textarea>
-    </label>
-    <br>
-    <label>
-      Prep time (min):
-      <input id="prep-time" type="number" min="1" required>
-    </label>
-    <br>
-    <label>
-      Price:
-      <input id="price" type="number" min="0" step="0.01" required>
-    </label>
-    <br>
-    <label>
-      Delivery area:
-      <select id="delivery-area" required>
-        <option value="Central">Central</option>
-        <option value="North">North</option>
-        <option value="South">South</option>
-      </select>
-    </label>
-    <br>
-    <label>
-      Image URL (optional):
-      <input id="image-url" type="url">
-    </label>
-    <br>
-    <button id="register-meal-btn" type="submit">Register meal</button>
-    <p id="restaurant-message" style="margin-top:10px;"></p>
-  </form>
+<h1>Restaurant View</h1>
+<nav><a href="index.html">Home</a> | <a href="customer.html">Customer View</a></nav>
 
-  <script src="app.js"></script>
+<div class="card">
+  <h2>Register a meal</h2>
+
+  <input id="mealName" placeholder="Meal name" />
+  <textarea id="mealDescription" placeholder="Description"></textarea>
+
+  <input id="mealPrepTime" type="number" placeholder="Preparation time (minutes)" />
+  <input id="mealPrice" type="number" placeholder="Price (€)" step="0.01" />
+
+  <select id="mealArea">
+    <option value="">-- Select delivery area --</option>
+    <option value="Central">Central</option>
+    <option value="North">North</option>
+    <option value="South">South</option>
+  </select>
+
+  <button id="registerMealBtn">Register meal</button>
+  <div id="mealStatus"></div>
+</div>
+
+<script>
+  const REGISTER_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPRegisterMeal";
+
+  function setStatus(el, msg, type) {
+    el.textContent = msg;
+    el.className = type;
+  }
+
+  document.getElementById("registerMealBtn").addEventListener("click", async () => {
+    const name = document.getElementById("mealName").value.trim();
+    const desc = document.getElementById("mealDescription").value.trim();
+    const prep = Number(document.getElementById("mealPrepTime").value);
+    const price = Number(document.getElementById("mealPrice").value);
+    const area = document.getElementById("mealArea").value;
+    const status = document.getElementById("mealStatus");
+
+    if (!name || !area) {
+      return setStatus(status, "Name and area are required.", "error");
+    }
+
+    const payload = {
+      name,
+      description: desc,
+      estimatedPrepTime: prep,
+      price,
+      deliveryArea: area
+    };
+
+    try {
+      const res = await fetch(REGISTER_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      setStatus(status, "Meal registered!", "ok");
+    } catch (err) {
+      console.error(err);
+      setStatus(status, "Error registering meal.", "error");
+    }
+  });
+</script>
+
 </body>
 </html>
-
