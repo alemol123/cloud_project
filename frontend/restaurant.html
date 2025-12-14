@@ -1,88 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Restaurant View</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: Arial; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f4f8; }
-    .card { background: white; padding: 20px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-    input, textarea, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; }
-    button { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-    button:hover { background: #1e4fcf; }
-    .error { color: #b91c1c; }
-    .ok { color: #15803d; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Portal - Register Meal</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; margin-top: 20px; }
+        .message { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; display: none; }
+    </style>
 </head>
 <body>
+    <header>
+        <h2>🍴 Restaurant Meal Registration</h2>
+        <p><a href="customer.html">Switch to Customer View</a></p>
+    </header>
 
-<h1>Restaurant View</h1>
-<nav><a href="index.html">Home</a> | <a href="customer.html">Customer View</a></nav>
+    <form id="mealRegistrationForm">
+        <label for="dishName">Dish Name:</label>
+        <input type="text" id="dishName" name="dishName" required>
 
-<div class="card">
-  <h2>Register a meal</h2>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" rows="3" required></textarea>
 
-  <input id="mealName" placeholder="Meal name" />
-  <textarea id="mealDescription" placeholder="Description"></textarea>
+        <label for="prepTime">Preparation Time (minutes):</label>
+        <input type="number" id="prepTime" name="prepTime" min="5" required>
 
-  <input id="mealPrepTime" type="number" placeholder="Preparation time (minutes)" />
-  <input id="mealPrice" type="number" placeholder="Price (€)" step="0.01" />
+        <label for="price">Price ($):</label>
+        <input type="number" id="price" name="price" step="0.01" min="0.01" required>
 
-  <select id="mealArea">
-    <option value="">-- Select delivery area --</option>
-    <option value="Central">Central</option>
-    <option value="North">North</option>
-    <option value="South">South</option>
-  </select>
+        <label for="area">Delivery Area:</label>
+        <select id="area" name="area" required>
+            <option value="">-- Select Area --</option>
+            <option value="Central">Central</option>
+            <option value="North">North</option>
+            <option value="South">South</option>
+        </select>
 
-  <button id="registerMealBtn">Register meal</button>
-  <div id="mealStatus"></div>
-</div>
+        <button type="submit">Register Meal</button>
+    </form>
 
-<script>
-  const REGISTER_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPRegisterMeal";
+    <div id="message" class="message"></div>
 
-  function setStatus(el, msg, type) {
-    el.textContent = msg;
-    el.className = type;
-  }
+    <script>
+        // *** IMPORTANT: REPLACE WITH YOUR AZURE FUNCTION URL ***
+        const AZURE_FUNCTION_URL_REGISTER = "YOUR_AZURE_FUNCTION_HTTP_TRIGGER_URL_FOR_REGISTERING_MEALS";
 
-  document.getElementById("registerMealBtn").addEventListener("click", async () => {
-    const name = document.getElementById("mealName").value.trim();
-    const desc = document.getElementById("mealDescription").value.trim();
-    const prep = Number(document.getElementById("mealPrepTime").value);
-    const price = Number(document.getElementById("mealPrice").value);
-    const area = document.getElementById("mealArea").value;
-    const status = document.getElementById("mealStatus");
+        document.getElementById('mealRegistrationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            registerMeal();
+        });
 
-    if (!name || !area) {
-      return setStatus(status, "Name and area are required.", "error");
-    }
+        async function registerMeal() {
+            const form = document.getElementById('mealRegistrationForm');
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'none';
 
-    const payload = {
-      name,
-      description: desc,
-      estimatedPrepTime: prep,
-      price,
-      deliveryArea: area
-    };
+            const mealData = {
+                dishName: form.dishName.value,
+                description: form.description.value,
+                prepTime: parseInt(form.prepTime.value),
+                price: parseFloat(form.price.value),
+                deliveryArea: form.area.value
+            };
 
-    try {
-      const res = await fetch(REGISTER_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+            try {
+                const response = await fetch(AZURE_FUNCTION_URL_REGISTER, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(mealData)
+                });
 
-      if (!res.ok) throw new Error(await res.text());
-
-      setStatus(status, "Meal registered!", "ok");
-    } catch (err) {
-      console.error(err);
-      setStatus(status, "Error registering meal.", "error");
-    }
-  });
-</script>
-
+                if (response.ok) {
+                    messageDiv.textContent = `✅ Success! Meal "${mealData.dishName}" registered.`;
+                    messageDiv.style.backgroundColor = '#d4edda'; // Light green for success
+                    form.reset();
+                } else {
+                    const errorText = await response.text();
+                    messageDiv.textContent = `❌ Error registering meal: ${response.status} - ${errorText}`;
+                    messageDiv.style.backgroundColor = '#f8d7da'; // Light red for error
+                }
+            } catch (error) {
+                // This catches network errors or CORS issues
+                console.error('Network or CORS error:', error);
+                messageDiv.textContent = `⚠️ Network Error: Could not reach the server. Check your Azure Function URL and CORS settings.`;
+                messageDiv.style.backgroundColor = '#fff3cd'; // Light yellow for warning
+            }
+            messageDiv.style.display = 'block';
+        }
+    </script>
 </body>
 </html>

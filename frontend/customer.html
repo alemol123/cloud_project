@@ -1,153 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Customer View - Cloud Food Delivery</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: Arial; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f4f8; }
-    .card { background: white; padding: 20px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-    button { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-    button:hover { background: #1e4fcf; }
-    input, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; }
-    .error { color: #b91c1c; }
-    .ok { color: #15803d; }
-    .meal-item { padding: 8px 0; border-bottom: 1px dashed #ccc; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Portal - Place Order</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 20px; }
+        p { margin-top: 10px; }
+        #mealList { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 20px; }
+        .meal-item { border: 1px solid #eee; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .meal-details { flex-grow: 1; }
+        .meal-price { font-weight: bold; color: #E91E63; }
+        .order-form { margin-top: 30px; padding: 20px; border: 2px solid #03A9F4; background-color: #e3f2fd; }
+        .order-form label { display: block; margin-top: 10px; font-weight: bold; }
+        .order-form input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { background-color: #03A9F4; color: white; padding: 10px 15px; border: none; cursor: pointer; margin-top: 20px; }
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
+    <header>
+        <h2>🛍️ Customer Order Platform</h2>
+        <p><a href="restaurant.html">Switch to Restaurant View</a></p>
+    </header>
 
-<h1>Customer View</h1>
-<nav><a href="index.html">Home</a> | <a href="restaurant.html">Restaurant View</a></nav>
+    <section id="area-selection">
+        <h3>1. Select Your Delivery Area</h3>
+        <label for="deliveryArea">Delivery Area:</label>
+        <select id="deliveryArea" onchange="fetchMeals()">
+            <option value="">-- Select Area --</option>
+            <option value="Central">Central</option>
+            <option value="North">North</option>
+            <option value="South">South</option>
+        </select>
+    </section>
 
-<div class="card">
-  <h2>Select delivery area</h2>
-  <select id="areaSelect">
-    <option value="">-- Select an area --</option>
-    <option value="Central">Central</option>
-    <option value="North">North</option>
-    <option value="South">South</option>
-  </select>
-  <button id="loadMealsBtn">Load meals</button>
-  <div id="loadStatus"></div>
-</div>
+    <section id="mealList" class="hidden">
+        <h3>2. Choose Your Meals</h3>
+        <div id="mealsContainer">
+            </div>
+    </section>
 
-<div class="card">
-  <h2>Available meals</h2>
-  <div id="mealsContainer"></div>
-</div>
+    <section id="orderSection" class="hidden">
+        <div class="order-form">
+            <h3>3. Place Your Order</h3>
+            <p>Total Cost: $<span id="totalCost">0.00</span></p>
 
-<div class="card">
-  <h2>Your details</h2>
-  <input id="customerName" placeholder="Your name" />
-  <input id="customerAddress" placeholder="Your address" />
-  <button id="placeOrderBtn">Place order</button>
-  <div id="orderStatus"></div>
-</div>
-
-<div class="card" id="confirmationCard" style="display:none;">
-  <h2>Order confirmation</h2>
-  <div id="orderSummary"></div>
-</div>
-
-<script>
-  const MEALS_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPGetMealsByArea";
-  const ORDER_API_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/HTTPSubmitOrder";
-
-  const areaSelect = document.getElementById("areaSelect");
-  const loadMealsBtn = document.getElementById("loadMealsBtn");
-  const mealsContainer = document.getElementById("mealsContainer");
-  const loadStatus = document.getElementById("loadStatus");
-
-  const placeOrderBtn = document.getElementById("placeOrderBtn");
-  const orderStatus = document.getElementById("orderStatus");
-  const confirmationCard = document.getElementById("confirmationCard");
-  const orderSummary = document.getElementById("orderSummary");
-
-  function setStatus(el, msg, type) {
-    el.textContent = msg;
-    el.className = type;
-  }
-
-  async function loadMeals() {
-    const area = areaSelect.value;
-    if (!area) return setStatus(loadStatus, "Please select an area.", "error");
-
-    setStatus(loadStatus, "Loading meals...", "ok");
-
-    try {
-      const res = await fetch(`${MEALS_API_URL}?area=${area}`);
-      if (!res.ok) throw new Error(await res.text());
-
-      const meals = await res.json();
-
-      mealsContainer.innerHTML = meals.map(m => `
-        <div class="meal-item">
-          <label>
-            <input type="checkbox" class="meal-checkbox"
-                   data-name="${m.Name}"
-                   data-price="${m.Price}"
-                   data-prep="${m.EstimatedPrepTime}">
-            <strong>${m.Name}</strong> – €${m.Price}
-          </label><br>
-          <small>${m.Description || ""}</small>
+            <form id="placeOrderForm">
+                <label for="customerAddress">Your Address (e.g., 123 Main St):</label>
+                <input type="text" id="customerAddress" required>
+                <button type="submit">Place Order Now</button>
+            </form>
         </div>
-      `).join("");
+    </section>
+    
+    <div id="orderConfirmation" class="order-form hidden" style="background-color: #e8f5e9; border-color: #4CAF50;">
+        <h3>Order Confirmed! 🎉</h3>
+        <p>Your order has been successfully placed. Details:</p>
+        <ul>
+            <li>**Total Cost:** $<span id="confTotalCost">0.00</span></li>
+            <li>**Estimated Delivery Time:** <span id="confDeliveryTime"></span> minutes</li>
+        </ul>
+        <p>Thank you for your business!</p>
+    </div>
 
-      setStatus(loadStatus, "Meals loaded.", "ok");
+    <script>
+        // *** IMPORTANT: REPLACE WITH YOUR AZURE FUNCTION URLS ***
+        const AZURE_FUNCTION_URL_GET_MEALS = "YOUR_AZURE_FUNCTION_HTTP_TRIGGER_URL_FOR_GETTING_MEALS";
+        const AZURE_FUNCTION_URL_PLACE_ORDER = "YOUR_AZURE_FUNCTION_HTTP_TRIGGER_URL_FOR_PLACING_ORDER";
 
-    } catch (err) {
-      console.error(err);
-      setStatus(loadStatus, "Failed to load meals.", "error");
-    }
-  }
+        let selectedMeals = [];
+        let currentArea = '';
+        let totalPreparationTime = 0;
+        const FIXED_PICKUP_TIME = 10; // minutes
+        const FIXED_DELIVERY_TIME = 20; // minutes
 
-  async function placeOrder() {
-    const name = document.getElementById("customerName").value.trim();
-    const address = document.getElementById("customerAddress").value.trim();
-    const area = areaSelect.value;
+        document.getElementById('placeOrderForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            placeOrder();
+        });
 
-    if (!name || !address) return setStatus(orderStatus, "Please fill in your details.", "error");
+        // --- FETCH MEALS FUNCTION (Addressing "Meals Not Loading") ---
+        async function fetchMeals() {
+            currentArea = document.getElementById('deliveryArea').value;
+            const mealsContainer = document.getElementById('mealsContainer');
+            mealsContainer.innerHTML = 'Loading meals...';
+            document.getElementById('mealList').classList.remove('hidden');
+            document.getElementById('orderSection').classList.add('hidden');
+            document.getElementById('orderConfirmation').classList.add('hidden');
+            selectedMeals = [];
+            updateTotalCost();
 
-    const items = [...document.querySelectorAll(".meal-checkbox:checked")].map(cb => ({
-      name: cb.dataset.name,
-      price: Number(cb.dataset.price),
-      prepTime: Number(cb.dataset.prep)
-    }));
+            if (!currentArea) {
+                mealsContainer.innerHTML = 'Please select a delivery area.';
+                document.getElementById('mealList').classList.add('hidden');
+                return;
+            }
 
-    if (items.length === 0) return setStatus(orderStatus, "Select at least one meal.", "error");
+            try {
+                // Call the Azure Function to get meals for the selected area
+                const url = `${AZURE_FUNCTION_URL_GET_MEALS}?area=${currentArea}`;
+                const response = await fetch(url);
 
-    const totalCost = items.reduce((a, b) => a + b.price, 0);
-    const totalPrep = items.reduce((a, b) => a + b.prepTime, 0);
-    const estimatedTime = totalPrep + 25;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
 
-    const payload = { customerName: name, customerAddress: address, deliveryArea: area, items, totalCost, estimatedDeliveryTime: estimatedTime };
+                const meals = await response.json(); // Assuming your Function returns a JSON array of meals
+                renderMeals(meals);
 
-    try {
-      const res = await fetch(ORDER_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+            } catch (error) {
+                console.error('Error fetching meals:', error);
+                mealsContainer.innerHTML = `❌ Error loading meals. Please check the Console (F12) for details. (Possible CORS or Function deployment issue)`;
+            }
+        }
 
-      if (!res.ok) throw new Error(await res.text());
+        function renderMeals(meals) {
+            const mealsContainer = document.getElementById('mealsContainer');
+            mealsContainer.innerHTML = ''; // Clear previous meals
 
-      setStatus(orderStatus, "Order placed!", "ok");
-      confirmationCard.style.display = "block";
-      orderSummary.innerHTML = `
-        <p>Total cost: €${totalCost}</p>
-        <p>Estimated time: ${estimatedTime} min</p>
-      `;
+            if (meals.length === 0) {
+                mealsContainer.innerHTML = `<p>No meals available in the **${currentArea}** area.`;
+                document.getElementById('orderSection').classList.add('hidden');
+                return;
+            }
 
-    } catch (err) {
-      console.error(err);
-      setStatus(orderStatus, "Order failed.", "error");
-    }
-  }
+            meals.forEach(meal => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'meal-item';
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'meal-details';
+                detailsDiv.innerHTML = `
+                    <strong>${meal.dishName}</strong> 
+                    <span class="meal-price">$${meal.price.toFixed(2)}</span><br>
+                    <small>${meal.description} | Prep: ${meal.prepTime} min</small>
+                `;
 
-  loadMealsBtn.addEventListener("click", loadMeals);
-  placeOrderBtn.addEventListener("click", placeOrder);
-</script>
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = meal.RowKey; // Use a unique ID like RowKey
+                checkbox.setAttribute('data-price', meal.price);
+                checkbox.setAttribute('data-prep-time', meal.prepTime);
+                checkbox.addEventListener('change', handleMealSelection);
 
+                itemDiv.appendChild(detailsDiv);
+                itemDiv.appendChild(checkbox);
+                mealsContainer.appendChild(itemDiv);
+            });
+            
+            // Show the order section once meals are displayed
+            document.getElementById('orderSection').classList.remove('hidden');
+        }
+
+        function handleMealSelection(event) {
+            const checkbox = event.target;
+            const mealId = checkbox.value;
+            const price = parseFloat(checkbox.getAttribute('data-price'));
+            const prepTime = parseInt(checkbox.getAttribute('data-prep-time'));
+
+            if (checkbox.checked) {
+                selectedMeals.push({ id: mealId, price: price, prepTime: prepTime });
+            } else {
+                selectedMeals = selectedMeals.filter(meal => meal.id !== mealId);
+            }
+            updateTotalCost();
+        }
+
+        function updateTotalCost() {
+            let cost = 0;
+            totalPreparationTime = 0;
+            selectedMeals.forEach(meal => {
+                cost += meal.price;
+                totalPreparationTime += meal.prepTime;
+            });
+
+            document.getElementById('totalCost').textContent = cost.toFixed(2);
+        }
+
+        // --- PLACE ORDER FUNCTION (Addressing "Order Not Working") ---
+        async function placeOrder() {
+            if (selectedMeals.length === 0) {
+                alert("Please select at least one meal to place an order.");
+                return;
+            }
+
+            const customerAddress = document.getElementById('customerAddress').value;
+            if (!customerAddress) {
+                 alert("Please enter your address.");
+                return;
+            }
+            
+            const finalTotalCost = selectedMeals.reduce((sum, meal) => sum + meal.price, 0);
+            
+            // Calculate Estimated Delivery Time
+            const estimatedTime = totalPreparationTime + FIXED_PICKUP_TIME + FIXED_DELIVERY_TIME;
+
+            const orderPayload = {
+                // The RowKeys (unique IDs) of the selected meals
+                mealIds: selectedMeals.map(m => m.id), 
+                deliveryArea: currentArea,
+                customerAddress: customerAddress,
+                totalCost: finalTotalCost,
+                estimatedTime: estimatedTime,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(AZURE_FUNCTION_URL_PLACE_ORDER, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderPayload)
+                });
+
+                if (response.ok) {
+                    // Display Confirmation
+                    document.getElementById('orderSection').classList.add('hidden');
+                    document.getElementById('confTotalCost').textContent = finalTotalCost.toFixed(2);
+                    document.getElementById('confDeliveryTime').textContent = estimatedTime;
+                    document.getElementById('orderConfirmation').classList.remove('hidden');
+
+                    // Advanced: You might receive the final order ID from the backend here
+                } else {
+                    const errorDetails = await response.text();
+                    alert(`Order failed: ${response.status}. Details: ${errorDetails}. Check console for full error.`);
+                }
+
+            } catch (error) {
+                 console.error('Network or CORS error placing order:', error);
+                 alert(`⚠️ Network Error: Could not place order. Check Azure Function URL and CORS settings.`);
+            }
+        }
+
+    </script>
 </body>
 </html>
