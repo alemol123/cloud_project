@@ -151,9 +151,7 @@
   </div>
 
   <script>
-    // 🔴 MUY IMPORTANTE:
-    // Sustituye este string por el URL COMPLETO de "Get function URL" de HTTPRegisterMeal
-    // Ejemplo: "https://.../api/HTTPRegisterMeal?code=XXXX"
+    // Pega aquí el URL completo de HTTPRegisterMeal (default Function key)
     const REGISTER_MEAL_URL = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api/registerMeal";
 
     const restaurantForm = document.getElementById("restaurantForm");
@@ -182,14 +180,14 @@
         return;
       }
 
-      // 👇 Coincide con lo que espera tu función (fíjate en el mensaje Missing fields: prepTimeMinutes)
       const payload = {
         restaurantName,
         dishName,
         description,
         prepTimeMinutes: Number(prepTimeMinutes),
         price: Number(price),
-        area
+        // 👇 campo que pide tu backend
+        deliveryArea: area
       };
 
       try {

@@ -382,29 +382,16 @@
       const estimatedTimeMinutes = summary.estimatedTime;
 
       // 👇 IMPORTANTE: el backend pide `selectedMeals`
-      const selectedMeals = selected.map((meal) => ({
-        restaurantName:
-          meal.restaurantName || meal.RestaurantName || meal.restaurant,
-        dishName: meal.dishName || meal.DishName || meal.name,
-        price: Number(meal.price ?? meal.Price ?? 0),
-        prepTimeMinutes:
-          Number(
-            meal.prepTimeMinutes ||
-              meal.prep_time_minutes ||
-              meal.prepTime ||
-              0
-          ) || 0
-      }));
+      const selectedMeals = selected;  // no transformation
 
       const payload = {
         customerName: name,
         customerAddress: address,
         area,
-        selectedMeals,            // 👈 nombre exacto que pide tu función
+        selectedMeals,            // backend now sees the full meal entities
         totalCost,
         estimatedTimeMinutes
       };
-
       try {
         placeOrderBtn.disabled = true;
         const response = await fetch(SUBMIT_ORDER_URL, {
