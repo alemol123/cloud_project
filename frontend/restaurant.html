@@ -20,6 +20,9 @@
     </header>
 
     <form id="mealRegistrationForm">
+        <label for="restaurantName">Restaurant Name:</label>
+        <input type="text" id="restaurantName" name="restaurantName" required>
+
         <label for="dishName">Dish Name:</label>
         <input type="text" id="dishName" name="dishName" required>
 
@@ -46,8 +49,11 @@
     <div id="message" class="message"></div>
 
     <script>
-        // *** IMPORTANT: REPLACE WITH YOUR AZURE FUNCTION URL ***
-        const AZURE_FUNCTION_URL_REGISTER = "YOUR_AZURE_FUNCTION_HTTP_TRIGGER_URL_FOR_REGISTERING_MEALS";
+        // --- Configuration ---
+        const AZURE_HOST = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
+        // *** IMPORTANT: REPLACE 'RegisterMeal' with your Function Name and ADD your function key ('&code=YOUR_KEY') ***
+        const AZURE_FUNCTION_URL_REGISTER = AZURE_HOST + "/api/RegisterMeal"; 
+        // ---------------------
 
         document.getElementById('mealRegistrationForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -60,12 +66,17 @@
             messageDiv.style.display = 'none';
 
             const mealData = {
+                // Now includes Restaurant Name
+                restaurantName: form.restaurantName.value, 
                 dishName: form.dishName.value,
                 description: form.description.value,
                 prepTime: parseInt(form.prepTime.value),
                 price: parseFloat(form.price.value),
                 deliveryArea: form.area.value
             };
+            
+            // Log payload to help with debugging the backend function
+            console.log("Sending Meal Data:", mealData); 
 
             try {
                 const response = await fetch(AZURE_FUNCTION_URL_REGISTER, {
@@ -77,19 +88,18 @@
                 });
 
                 if (response.ok) {
-                    messageDiv.textContent = `✅ Success! Meal "${mealData.dishName}" registered.`;
-                    messageDiv.style.backgroundColor = '#d4edda'; // Light green for success
+                    messageDiv.textContent = `✅ Success! Meal "${mealData.dishName}" from ${mealData.restaurantName} registered.`;
+                    messageDiv.style.backgroundColor = '#d4edda'; 
                     form.reset();
                 } else {
                     const errorText = await response.text();
                     messageDiv.textContent = `❌ Error registering meal: ${response.status} - ${errorText}`;
-                    messageDiv.style.backgroundColor = '#f8d7da'; // Light red for error
+                    messageDiv.style.backgroundColor = '#f8d7da'; 
                 }
             } catch (error) {
-                // This catches network errors or CORS issues
                 console.error('Network or CORS error:', error);
                 messageDiv.textContent = `⚠️ Network Error: Could not reach the server. Check your Azure Function URL and CORS settings.`;
-                messageDiv.style.backgroundColor = '#fff3cd'; // Light yellow for warning
+                messageDiv.style.backgroundColor = '#fff3cd'; 
             }
             messageDiv.style.display = 'block';
         }
