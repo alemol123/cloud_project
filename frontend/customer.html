@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Customer – Cloud Food Delivery</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>Customer View</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>Customer View</h1>
@@ -15,7 +15,6 @@
   <section>
     <h2>Select delivery area</h2>
     <select id="area-select">
-      <option value="">-- choose an area --</option>
       <option value="Central">Central</option>
       <option value="North">North</option>
       <option value="South">South</option>
@@ -30,12 +29,19 @@
 
   <section>
     <h2>Your details</h2>
-    <label>Name: <input id="customer-name" /></label><br />
-    <label>Address: <input id="customer-address" /></label><br />
+    <label>
+      Name:
+      <input id="customer-name" type="text">
+    </label>
+    <br>
+    <label>
+      Address:
+      <input id="customer-address" type="text">
+    </label>
+    <br>
     <button id="place-order-btn">Place order</button>
+    <div id="order-confirmation" class="hidden"></div>
   </section>
-
-  <section id="order-confirmation" class="hidden"></section>
 
   <script src="app.js"></script>
 </body>

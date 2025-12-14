@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Restaurant – Cloud Food Delivery</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>Restaurant View</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>Restaurant View</h1>
@@ -13,27 +13,50 @@
   </nav>
 
   <form id="meal-form">
-    <label>Restaurant name: <input id="restaurant-name" required /></label><br />
-    <label>Dish name: <input id="dish-name" required /></label><br />
-    <label>Description:<br />
+    <label>
+      Restaurant name:
+      <input id="restaurant-name" type="text" required>
+    </label>
+    <br>
+    <label>
+      Dish name:
+      <input id="dish-name" type="text" required>
+    </label>
+    <br>
+    <label>
+      Description:
       <textarea id="dish-description" required></textarea>
-    </label><br />
-    <label>Prep time (min): <input id="prep-time" type="number" min="1" required /></label><br />
-    <label>Price: <input id="price" type="number" min="0" step="0.01" required /></label><br />
-    <label>Delivery area:
+    </label>
+    <br>
+    <label>
+      Prep time (min):
+      <input id="prep-time" type="number" min="1" required>
+    </label>
+    <br>
+    <label>
+      Price:
+      <input id="price" type="number" min="0" step="0.01" required>
+    </label>
+    <br>
+    <label>
+      Delivery area:
       <select id="delivery-area" required>
-        <option value="">-- choose an area --</option>
         <option value="Central">Central</option>
         <option value="North">North</option>
         <option value="South">South</option>
       </select>
-    </label><br />
-    <label>Image URL (optional): <input id="image-url" /></label><br />
-    <button type="submit">Register meal</button>
+    </label>
+    <br>
+    <label>
+      Image URL (optional):
+      <input id="image-url" type="url">
+    </label>
+    <br>
+    <button id="register-meal-btn" type="submit">Register meal</button>
+    <p id="restaurant-message" style="margin-top:10px;"></p>
   </form>
-
-  <p id="restaurant-message"></p>
 
   <script src="app.js"></script>
 </body>
 </html>
+
