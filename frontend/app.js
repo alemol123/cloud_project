@@ -1,5 +1,5 @@
 // TODO: change this once your Azure Functions URL is ready
-const API_BASE = "https://YOUR-FUNCTION-APP.azurewebsites.net/api";
+const API_BASE = "food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
 
 document.addEventListener("DOMContentLoaded", () => {
   const loadMealsBtn = document.getElementById("load-meals-btn");
