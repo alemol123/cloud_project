@@ -30,7 +30,8 @@ async function handleMealSubmit(e) {
 
   const payload = {
     restaurantName,
-    dishName,
+    // IMPORTANT: backend expects "name" for the dish (to match Azure column)
+    name: dishName,
     description,
     prepTimeMinutes: Number(prepTime),
     price: Number(price),
@@ -94,6 +95,7 @@ async function handleLoadMeals() {
   }
 }
 
+// map Azure entity fields -> what we show in UI
 function renderMeals(container, meals) {
   if (!meals.length) {
     container.textContent = "No meals available in this area.";
@@ -102,23 +104,36 @@ function renderMeals(container, meals) {
 
   container.innerHTML = "";
   meals.forEach((meal, idx) => {
-    const card      = document.createElement("div");
-    card.className  = "meal-card";
-    const checkId   = `meal-check-${idx}`;
-    const qtyId     = `meal-qty-${idx}`;
-    const priceText = typeof meal.price === "number" ? meal.price.toFixed(2) : meal.price;
+    // Azure fields:
+    //  - meal.name           (dish name)
+    //  - meal.restaurantName
+    //  - meal.description
+    //  - meal.prepTimeMinutes
+    //  - meal.price
+    const dishName       = meal.name || "Unnamed meal";
+    const restaurantName = meal.restaurantName || "N/A";
+    const prepTime       = meal.prepTimeMinutes ?? null;
+    const priceRaw       = meal.price ?? null;
+    const priceNumber    = typeof priceRaw === "number" ? priceRaw : Number(priceRaw);
+    const priceText      = isNaN(priceNumber) ? "N/A" : priceNumber.toFixed(2);
+
+    const card = document.createElement("div");
+    card.className = "meal-card";
+
+    const checkboxId = `meal-check-${idx}`;
+    const qtyId      = `meal-qty-${idx}`;
 
     card.innerHTML = `
       <label>
-        <input type="checkbox" id="${checkId}" data-index="${idx}">
-        <strong>${meal.dishName}</strong> – €${priceText}
+        <input type="checkbox" id="${checkboxId}" data-index="${idx}">
+        <strong>${dishName}</strong> – €${priceText}
       </label>
-      <div>Restaurant: ${meal.restaurantName || "N/A"}</div>
+      <div>Restaurant: ${restaurantName}</div>
       <div>${meal.description || ""}</div>
-      <div>Prep time: ${meal.prepTimeMinutes} min</div>
+      <div>Prep time: ${prepTime ?? "N/A"} min</div>
       <label>
         Quantity:
-        <input type="number" id="${qtyId}" data-index="${idx}" value="1" min="1" style="width:60px;">
+        <input type="number" id="${qtyId}" data-index="${idx}" value="1" min="1" style="width: 60px;">
       </label>
     `;
 
@@ -127,10 +142,10 @@ function renderMeals(container, meals) {
 }
 
 async function handlePlaceOrder() {
-  const area              = document.getElementById("area-select").value;
-  const customerName      = document.getElementById("customer-name").value.trim();
-  const customerAddress   = document.getElementById("customer-address").value.trim();
-  const confirmationEl    = document.getElementById("order-confirmation");
+  const area            = document.getElementById("area-select").value;
+  const customerName    = document.getElementById("customer-name").value.trim();
+  const customerAddress = document.getElementById("customer-address").value.trim();
+  const confirmationEl  = document.getElementById("order-confirmation");
 
   if (!area || !customerName || !customerAddress) {
     alert("Please fill your details and select an area.");
@@ -144,13 +159,20 @@ async function handlePlaceOrder() {
     if (checkbox && checkbox.checked) {
       const qty = Number(qtyInput.value || 0);
       if (qty > 0) {
+        const dishName       = meal.name || "Unnamed meal";
+        const restaurantName = meal.restaurantName || "N/A";
+        const prepTime       = meal.prepTimeMinutes ?? null;
+        const priceRaw       = meal.price ?? null;
+        const priceNumber    = typeof priceRaw === "number" ? priceRaw : Number(priceRaw);
+
         selectedMeals.push({
-          mealId:            meal.mealId,
-          quantity:          qty,
-          price:             meal.price,
-          prepTimeMinutes:   meal.prepTimeMinutes,
-          dishName:          meal.dishName,
-          restaurantName:    meal.restaurantName
+          // RowKey is a good fallback if your function doesn’t explicitly set mealId
+          mealId:          meal.mealId || meal.RowKey || null,
+          quantity:        qty,
+          price:           priceNumber,
+          prepTimeMinutes: prepTime,
+          dishName,
+          restaurantName
         });
       }
     }
