@@ -1,25 +1,26 @@
 // ===============================
-//  Configuration
+// Configuration
 // ===============================
 
-const API_BASE = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api";
+const API_BASE =
+  "food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net";
 
-// If your function routes are named differently, change them here.
+// Deben coincidir con las "route" de los function.json
 const ENDPOINTS = {
-  meals: "meals",             // GET  /api/meals?area=Central
-  registerMeal: "registermeal", // POST /api/registermeal   (or whatever you used)
-  submitOrder: "submitorder"    // POST /api/submitorder    (or /orders)
+  meals: "meals",          // GET  /api/meals?area=Central
+  registerMeal: "registerMeal", // POST /api/registerMeal
+  submitOrder: "submitOrder"    // POST /api/submitOrder
 };
 
-// Store last loaded meals so we can use them when placing orders
+// Últimos platos cargados (se usan para el pedido)
 let currentMeals = [];
 
 // ===============================
-//  Page bootstrap
+// Page bootstrap
 // ===============================
 
 window.addEventListener("DOMContentLoaded", () => {
-  // Customer view?
+  // Customer view
   const loadMealsBtn = document.getElementById("load-meals-btn");
   if (loadMealsBtn) {
     loadMealsBtn.addEventListener("click", loadMeals);
@@ -28,11 +29,10 @@ window.addEventListener("DOMContentLoaded", () => {
     if (placeOrderBtn) {
       placeOrderBtn.addEventListener("click", submitOrder);
     }
-
     return;
   }
 
-  // Restaurant view?
+  // Restaurant view
   const registerMealBtn = document.getElementById("register-meal-btn");
   if (registerMealBtn) {
     registerMealBtn.addEventListener("click", registerMeal);
@@ -41,14 +41,14 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 // ===============================
-//  Customer view – load meals
+// Customer view – load meals
 // ===============================
 
 async function loadMeals() {
   const areaSelect = document.getElementById("delivery-area");
   const area = areaSelect.value;
-  const mealsContainer = document.getElementById("meals-container");
 
+  const mealsContainer = document.getElementById("meals-container");
   mealsContainer.textContent = "Loading...";
 
   try {
@@ -61,9 +61,6 @@ async function loadMeals() {
     }
 
     const data = await res.json();
-
-    // Your API returns a plain array: [ {...}, {...} ]
-    // But keep it flexible in case you ever wrap it.
     const meals = Array.isArray(data) ? data : data.meals;
 
     if (!Array.isArray(meals)) {
@@ -87,14 +84,14 @@ function renderMeals(meals) {
     return;
   }
 
-  meals.forEach(meal => {
+  meals.forEach((meal) => {
     const card = document.createElement("div");
     card.className = "meal-card";
 
     const title = meal.name ?? meal.dishName ?? "Unnamed meal";
     const price = Number(meal.price ?? 0);
-
-    const prep = meal.prepMinutes ?? meal.prepTimeMinutes ?? null;
+    const prep =
+      meal.prepMinutes ?? meal.prepTimeMinutes ?? meal.prepTimeMinutes ?? null;
     const prepText = prep != null ? `${prep} min` : "N/A min";
 
     card.innerHTML = `
@@ -102,23 +99,23 @@ function renderMeals(meals) {
         <input
           type="checkbox"
           class="meal-checkbox"
-          data-meal-id="${meal.mealId}"
-        >
+          data-meal-id="${meal.mealId || meal.id}"
+        />
         <strong>${title}</strong> – €${price.toFixed(2)}
       </label>
       <div>Restaurant: ${meal.restaurantName || "N/A"}</div>
       <div>${meal.description || ""}</div>
       <div>Prep time: ${prepText}</div>
-      <div>
+      <label>
         Quantity:
         <input
           type="number"
-          class="meal-quantity"
-          data-meal-id="${meal.mealId}"
-          value="1"
           min="1"
-        >
-      </div>
+          value="1"
+          class="meal-quantity"
+          data-meal-id="${meal.mealId || meal.id}"
+        />
+      </label>
     `;
 
     mealsContainer.appendChild(card);
@@ -126,7 +123,7 @@ function renderMeals(meals) {
 }
 
 // ===============================
-//  Customer view – submit order
+// Customer view – submit order
 // ===============================
 
 async function submitOrder(evt) {
@@ -144,11 +141,11 @@ async function submitOrder(evt) {
     return;
   }
 
-  // Map of mealId -> quantity
+  // Map de mealId -> quantity
   const checkedIds = new Set();
   const quantities = new Map();
 
-  document.querySelectorAll(".meal-checkbox").forEach(cb => {
+  document.querySelectorAll(".meal-checkbox").forEach((cb) => {
     if (cb.checked) {
       const mealId = cb.dataset.mealId;
       checkedIds.add(mealId);
@@ -160,7 +157,7 @@ async function submitOrder(evt) {
     return;
   }
 
-  document.querySelectorAll(".meal-quantity").forEach(input => {
+  document.querySelectorAll(".meal-quantity").forEach((input) => {
     const mealId = input.dataset.mealId;
     const qty = Number(input.value) || 0;
     if (checkedIds.has(mealId)) {
@@ -168,16 +165,16 @@ async function submitOrder(evt) {
     }
   });
 
+  // Muy importante: usar prepTimeMinutes (lo que espera la Function)
   const selectedMeals = currentMeals
-    .filter(m => checkedIds.has(m.mealId))
-    .map(m => ({
-      mealId: m.mealId,
+    .filter((m) => checkedIds.has(m.mealId || m.id))
+    .map((m) => ({
+      mealId: m.mealId || m.id,
       name: m.name ?? m.dishName,
-      price: Number(m.price ?? 0),
       restaurantName: m.restaurantName,
-      // Backend expects 'prepMinutes'
-      prepMinutes: m.prepMinutes ?? m.prepTimeMinutes ?? 0,
-      quantity: quantities.get(m.mealId) || 1
+      price: Number(m.price ?? 0),
+      prepTimeMinutes: m.prepMinutes ?? m.prepTimeMinutes ?? 0,
+      quantity: quantities.get(m.mealId || m.id) || 1,
     }));
 
   if (!selectedMeals.length) {
@@ -189,26 +186,11 @@ async function submitOrder(evt) {
     return;
   }
 
-  const totalCost = selectedMeals.reduce(
-    (sum, m) => sum + m.price * m.quantity,
-    0
-  );
-
-  const totalPrepMinutes = selectedMeals.reduce(
-    (sum, m) => sum + (m.prepMinutes || 0) * m.quantity,
-    0
-  );
-
-  // Simple estimate: sum prep + 10 min pickup + 20 min delivery
-  const estimatedMinutes = totalPrepMinutes + 10 + 20;
-
   const payload = {
     customerName,
     customerAddress,
     area: document.getElementById("delivery-area").value,
     selectedMeals,
-    totalCost,
-    estimatedMinutes
   };
 
   try {
@@ -216,8 +198,10 @@ async function submitOrder(evt) {
 
     const res = await fetch(`${API_BASE}/${ENDPOINTS.submitOrder}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -230,19 +214,21 @@ async function submitOrder(evt) {
       throw new Error(msg);
     }
 
-    const confirmation = data.confirmation || data;
+    const totalCost = data.totalCost ?? 0;
+    const est = data.estimatedDeliveryTimeMinutes ?? 0;
+
     setStatus(
       statusEl,
       `Order placed! Total €${totalCost.toFixed(
         2
-      )}. Estimated delivery: ${estimatedMinutes} min.`,
+      )}. Estimated delivery: ${est} min.`,
       false
     );
   } catch (err) {
     console.error("Error placing order:", err);
     setStatus(
       statusEl,
-      `Failed to place order: ${err.message || "Unknown error"}`,
+      `Error placing order: ${err.message || "Unknown error"}`,
       true
     );
   }
@@ -255,7 +241,7 @@ function setStatus(el, msg, isError = false) {
 }
 
 // ===============================
-//  Restaurant view – register meal
+// Restaurant view – register meal
 // ===============================
 
 async function registerMeal(evt) {
@@ -282,15 +268,12 @@ async function registerMeal(evt) {
   if (!restaurantName) missing.push("restaurantName");
   if (!dishName) missing.push("dishName");
   if (!description) missing.push("description");
-  if (!prepTimeStr) missing.push("prepMinutes");
+  if (!prepTimeStr) missing.push("prepTimeMinutes");
   if (!priceStr) missing.push("price");
+  if (!area) missing.push("deliveryArea");
 
   if (missing.length > 0) {
-    setStatus(
-      statusEl,
-      `Missing fields: ${missing.join(", ")}`,
-      true
-    );
+    setStatus(statusEl, `Missing fields: ${missing.join(", ")}`, true);
     return;
   }
 
@@ -307,15 +290,15 @@ async function registerMeal(evt) {
     return;
   }
 
+  // IMPORTANTE: nombres que espera HTTPRegisterMeal
   const payload = {
     restaurantName,
-    // Backend property is 'name' (we treat dishName as name)
-    name: dishName,
+    dishName,
     description,
-    prepMinutes,
+    prepTimeMinutes: prepMinutes,
     price,
-    area,
-    imageUrl
+    deliveryArea: area,
+    imageUrl,
   };
 
   try {
@@ -323,8 +306,10 @@ async function registerMeal(evt) {
 
     const res = await fetch(`${API_BASE}/${ENDPOINTS.registerMeal}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -339,7 +324,7 @@ async function registerMeal(evt) {
 
     setStatus(statusEl, "Meal registered successfully!", false);
 
-    // Optionally clear inputs
+    // Limpiamos los campos
     dishNameInput.value = "";
     descriptionInput.value = "";
     prepTimeInput.value = "";
@@ -349,7 +334,7 @@ async function registerMeal(evt) {
     console.error("Error registering meal:", err);
     setStatus(
       statusEl,
-      `Network error while registering meal. ${err.message || ""}`,
+      `Error registering meal: ${err.message || "Unknown error"}`,
       true
     );
   }
