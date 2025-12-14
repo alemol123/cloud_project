@@ -1,5 +1,7 @@
 // ---------- CONFIG ----------
-const API_BASE = "https://food-functions-g2-excmeddydee6ame4.westeurope-01.azurewebsites.net/api";
+const API_BASE = "https://food-functions-g2.azurewebsites.net/api";
+
+
 
 let currentMeals = [];
 
