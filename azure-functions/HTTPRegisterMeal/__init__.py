@@ -1,9 +1,8 @@
 import logging
 import json
 import uuid
-import datetime as dt
-
 import azure.functions as func
+import datetime as dt
 
 from ..storage_helpers import get_table_client
 
@@ -11,15 +10,14 @@ MEALS_TABLE = "Meals"
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("HTTPRegisterMeal processing request.")
+    logging.info("HTTPRegisterMeal called.")
 
-    # Intentamos leer el body como JSON
+    # --- Parse JSON ---
     try:
         body = req.get_json()
-    except ValueError:
+    except:
         return _error("Invalid JSON")
 
-    # Estos son EXACTAMENTE los campos que esperamos del frontend
     required = [
         "restaurantName",
         "dishName",
@@ -29,48 +27,54 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "deliveryArea",
     ]
 
-    missing = [f for f in required if f not in body or body[f] in (None, "")]
+    missing = [f for f in required if f not in body or body[f] in ("", None)]
     if missing:
         return _error(f"Missing fields: {', '.join(missing)}")
 
-    # Validación numérica
-    try:
-        prep_minutes = int(body["prepTimeMinutes"])
-        price = float(body["price"])
-    except Exception:
-        return _error("prepTimeMinutes must be int, price must be number")
+    # Clean values
+    restaurantName = str(body["restaurantName"])
+    dishName = str(body["dishName"])
+    description = str(body["description"])
 
-    # Estructura CONSISTENTE con HTTPGetMealsByArea
-    # HTTPGetMealsByArea lee: name, restaurantName, description, prepMinutes, price
+    try:
+        prep = int(body["prepTimeMinutes"])
+        price = float(body["price"])
+    except:
+        return _error("prepTimeMinutes must be int; price must be numeric")
+
+    deliveryArea = str(body["deliveryArea"])
+
+    # --- Table entity (Azure Table rules) ---
     entity = {
-        "PartitionKey": body["deliveryArea"],         # área de reparto
+        "PartitionKey": deliveryArea,
         "RowKey": str(uuid.uuid4()),
-        "name": body["dishName"],                     # nombre del plato
-        "restaurantName": body["restaurantName"],
-        "description": body["description"],
-        "prepMinutes": prep_minutes,
-        "price": price,
-        "imageUrl": body.get("imageUrl", ""),
-        "lastUpdated": dt.datetime.utcnow().isoformat() + "Z",
+        "RestaurantName": restaurantName,
+        "DishName": dishName,
+        "Description": description,
+        "PrepTimeMinutes": prep,
+        "Price": price,
+        "CreatedAt": dt.datetime.utcnow().isoformat() + "Z",
     }
 
     try:
         table = get_table_client(MEALS_TABLE)
-        table.create_table_if_not_exists()
+        table.create_table_if_not_exists()   # <-- THIS FIXES most failures
         table.create_entity(entity)
     except Exception as e:
-        logging.exception("Failed to create meal entity")
-        return _error("Error saving meal")
+        logging.error("ERROR INSERTING ENTITY:")
+        logging.exception(e)
+        return _error(f"Error saving meal: {str(e)}")
 
     return func.HttpResponse(
         json.dumps({"status": "ok", "mealId": entity["RowKey"]}),
-        mimetype="application/json",
+        status_code=201,
+        mimetype="application/json"
     )
 
 
-def _error(msg: str) -> func.HttpResponse:
+def _error(msg):
     return func.HttpResponse(
         json.dumps({"status": "error", "message": msg}),
         status_code=400,
-        mimetype="application/json",
+        mimetype="application/json"
     )
